@@ -170,6 +170,12 @@
         hostname = "toaster";
         users = ["thomas"];
       };
+
+      roomba = lib.mkHost {
+        system = "x86_64-linux";
+        hostname = "roomba";
+        users = ["majus"];
+      }
     };
 
     homeConfigurations = {
@@ -206,6 +212,14 @@
         system = "x86_64-linux";
         hostname = "toaster";
       };
+
+      majus = lib.mkUser {username = "majus"}
+
+      "majus@roomba" = lib.mkUser {
+        username = "majus";
+        system = "x86_64-linux";
+        hostname = "roomba";
+      }
     };
 
     formatter = inputs.flake-utils.eachDefaultSystem (
