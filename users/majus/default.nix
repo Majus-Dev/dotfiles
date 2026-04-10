@@ -19,7 +19,7 @@ in
         ++ outputs.lib.concatPaths {paths = ./config;};
 
       defaultTerminal = "wezterm";
-      defaultBrowser = "zen";
+      #defaultBrowser = "zen";
       avatar = ./avatar.jpg;
 
       modules =
@@ -69,6 +69,8 @@ in
             "mpv"
             "camera"
             "fastfetch"
+            "vicinae"
+            "noctalia"
           ]
           // {
             spotify = {
@@ -143,6 +145,9 @@ in
             dev.javascript.enable = true;
           };
 
+        wayland.windowManager.hyprland.settings.cursor.no_hardware_cursors = 1;
+        wayland.windowManager.hyprland.settings.cursor.use_cpu_buffer = 1;
+
         programs.hyprpanel.settings.bar.layouts = {
           "0" = lib.mkForce {
             left = [
@@ -181,6 +186,7 @@ in
           modrinth-app
           r2modman
           bitwarden-desktop
+          losslesscut-bin
         ];
 
         nixos = {
