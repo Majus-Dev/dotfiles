@@ -3,10 +3,9 @@
   lib',
   ...
 }: let
-  features
+  features = lib'.useFeatures self [
     {
       sops = {
-        vaultPath = "git+ssh://git@github.com/Boiing587/vault";
         privateKeys = ["id_priv"];
       };
     }
@@ -79,7 +78,7 @@ in {
     programs.git = {
       settings = {
         user = {
-          name = "Majus-Dev"";
+          name = "Majus-Dev";
           email = "83781075+Majus-Dev@users.noreply.github.com";
         };
       };
