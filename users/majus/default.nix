@@ -4,11 +4,7 @@
   ...
 }: let
   features = lib'.useFeatures self [
-    {
-      sops = {
-        privateKeys = ["id_priv"];
-      };
-    }
+    "sops"
     {
       ssh = {
         keys = [
@@ -72,7 +68,7 @@ in {
     home.stateVersion = "24.11";
 
     home.packages = with pkgs; [
-      solidtime-desktop
+      bitwarden-desktop
     ];
 
     programs.git = {

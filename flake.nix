@@ -34,7 +34,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     vault = {
-      url = "git+ssh://git@github.com/runarsf/vault";
+      url = "git+ssh://git@github.com/Boiing587/vault";
       flake = false;
     };
 
