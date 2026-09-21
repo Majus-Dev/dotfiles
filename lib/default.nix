@@ -1,27 +1,36 @@
-flake @ {inputs, ...}: let
-  core = import ./core.nix {
-    inherit inputs;
-    extlib = with inputs; nixpkgs.lib // nix-darwin.lib // home-manager.lib // nixlib.lib;
+{
+  inputs,
+  lib,
+  config,
+  ...
+}: let
+  inherit (lib) mkOption;
+  inherit (lib.types) listOf raw;
+  inherit (inputs.nixlib.lib) deepMerge;
+in {
+  options = {
+    libExtensions = mkOption {
+      type = listOf raw;
+      default = [];
+    };
   };
-in
-  with inputs;
-    nixlib.lib.deepMerge [
-      nixpkgs.lib
-      nix-darwin.lib
-      home-manager.lib
-      nixlib.lib
 
-      core
-
-      (core.importAndMerge [
-          ./conditionals.nix
-          ./hosts.nix
-          ./pkgs.nix
-          ./state.nix
-          ./users.nix
-          ./utils.nix
-          ./modules.nix
-          ./wm.nix
-        ]
-        flake)
-    ]
+  config = let
+    lib' = deepMerge (
+      [
+        lib
+        inputs.home-manager.lib
+        inputs.nixlib.lib
+      ]
+      ++ config.libExtensions
+    );
+  in {
+    # Support both passing as an argument and using as a dendrite.
+    _module.args = {
+      inherit lib';
+    };
+    flake = {
+      inherit lib';
+    };
+  };
+}

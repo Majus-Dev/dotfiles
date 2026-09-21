@@ -1,45 +1,60 @@
-flake @ {
-  inputs,
-  outputs,
-  ...
-}: {
-  # TODO Add osConfig: https://github.com/imatpot/dotfiles/commit/bc72621c353166667a4d8ecb3f5454d9f5c6de5f
-  #  Note that stylix doesn't work with this and causes an infinite recursion.
-
-  mkUser = args @ {
-    username,
-    hostname ? null,
-    system ? outputs.lib.defaultSystem,
-    stateVersion ? outputs.lib.defaultStateVersion,
-    # osConfig ? null,
-    ...
-  }:
-    outputs.lib.homeManagerConfiguration {
-      pkgs = outputs.lib.pkgsForSystem system;
-
-      extraSpecialArgs =
-        flake
-        // args
-        // {
-          # https://nixos.wiki/wiki/Nix_Language_Quirks#Default_values_are_not_bound_in_.40_syntax
-          inherit system hostname stateVersion;
-          # inherit osConfig;
-
-          # Actual name required by submodules. This makes sure everything is
-          # interopable across NixOS & non-NixOS systems.
-          # https://github.com/nix-community/home-manager/blob/ca4126e3c568be23a0981c4d69aed078486c5fce/nixos/common.nix#L22
-          name = username;
-          users = [username];
+{inputs, ...}: {
+  libExtensions = [
+    {
+      mkUser = {
+        self,
+        username,
+        homeModule,
+        homeDirectory ? "/home/${username}",
+        system ? "x86_64-linux",
+      }:
+        inputs.home-manager.lib.homeManagerConfiguration {
+          pkgs = import inputs.nixpkgs {inherit system;};
+          extraSpecialArgs = {inherit self;};
+          modules = [
+            homeModule
+            {
+              home = {
+                inherit username homeDirectory;
+              };
+            }
+          ];
         };
 
-      modules = [
-        ../modules/home-manager/shared.nix
-        ../modules/home-manager/default-config.nix
-        ../modules/nix/nix.nix
-
-        inputs.stylix.homeModules.stylix
-
-        ../users/${username}
-      ];
-    };
+      # Wraps the boilerplate common to every users/<name>/default.nix
+      mkNixosUser = {
+        self,
+        username,
+        features,
+        extraGroups ? [],
+        homeDirectory ? "/home/${username}",
+        initialPassword ? "changeme",
+      }: {pkgs, ...}: let
+        inherit (pkgs.stdenv.hostPlatform) system;
+      in {
+        imports = features ++ [self.nixosModules.primaryUser];
+        primaryUsers = [username];
+        nix.settings.trusted-users = [username];
+        home-manager.users.${username} = self.homeModules.${username};
+        users.users.${username} = {
+          inherit initialPassword;
+          isNormalUser = true;
+          shell = self.packages.${system}.zsh;
+          home = homeDirectory;
+          extraGroups =
+            [
+              "wheel"
+              "networkmanager"
+              "docker"
+              "audio"
+              "video"
+              "libvirtd"
+              "input"
+              "i2c"
+            ]
+            ++ extraGroups;
+        };
+      };
+    }
+  ];
 }

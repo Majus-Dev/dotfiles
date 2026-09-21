@@ -1,0 +1,45 @@
+{
+  self,
+  inputs,
+  withSystem,
+  lib',
+  ...
+}: {
+  flake.nixosConfigurations.toaster = let
+    hostFeatures = lib'.useFeatures self [
+      "steam"
+      {
+        android = {
+          ide = true;
+        };
+      }
+      "godot"
+    ];
+  in
+    lib'.mkHost {
+      inherit self withSystem;
+      configuration = _: {
+        imports = with self.nixosModules;
+          [
+            ./hardware-configuration.nix
+            inputs.nixos-hardware.nixosModules.lenovo-thinkpad-t490s
+            host
+            homeManager
+            thomas
+          ]
+          ++ hostFeatures.nixos;
+
+        home-manager.users.thomas.imports = hostFeatures.home;
+
+        features.niri.overrides = {
+          outputs."eDP-1".scale = 1;
+        };
+
+        system.stateVersion = "24.05";
+        networking.hostName = "toaster";
+
+        boot.loader.systemd-boot.enable = true;
+        boot.loader.efi.canTouchEfiVariables = true;
+      };
+    };
+}

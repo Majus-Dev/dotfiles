@@ -1,48 +1,53 @@
 {
-  # NOTE https://github.com/symphorien/nix-du
-  # TODO https://nixos.wiki/wiki/Storage_optimization
-  # TODO https://github.com/llem00n/brofile
-  # TODO Why do some of these follow nixpkgs-unstable, should they not follow nixpkgs?
-
   inputs = {
+    # Use `nix run .#updater` to update
+    # See `packages/updater/default.nix` for release-locked inputs
+    # NOTE: adding inputs.nixpkgs.follows will likely make cache miss
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-    nixpkgs-unstable.url = "github:nixos/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:nixos/nixpkgs/master";
-    nur.url = "github:nix-community/nur";
-
-    flake-utils.url = "github:numtide/flake-utils";
-    treefmt-nix.url = "github:numtide/treefmt-nix";
-
-    nix-darwin = {
-      url = "github:lnl7/nix-darwin";
+    home-manager = {
+      url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    home-manager = {
-      url = "github:nix-community/home-manager";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
+    nixpkgs-multiverse.url = "github:fzakaria/nixpkgs-multiverse";
 
+    alien.url = "github:thiagokokada/nix-alien";
+    treefmt-nix.url = "github:numtide/treefmt-nix";
+    import-tree.url = "github:vic/import-tree";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    wrapper-modules = {
+      url = "github:BirdeeHub/nix-wrapper-modules";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nixlib = {
       url = "github:runarsf/nixlib";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    alien.url = "github:thiagokokada/nix-alien";
-
     sops-nix = {
       url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    stylix = {
+      url = "github:danth/stylix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    vault = {
+      url = "git+ssh://git@github.com/runarsf/vault";
+      flake = false;
     };
 
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    hyprland.url = "github:hyprwm/Hyprland";
+    nixvim.url = "github:runarsf/nixvim";
+
+    hyprland.url = "github:hyprwm/Hyprland/275e27704a36d956fbdc28cec6399b8e298b06ca";
     hyprland-plugins = {
-      url = "github:hyprwm/hyprland-plugins";
+      url = "github:hyprwm/hyprland-plugins/v0.56.0";
       inputs.hyprland.follows = "hyprland";
     };
     hypr-dynamic-cursors = {
@@ -50,16 +55,14 @@
       inputs.hyprland.follows = "hyprland";
     };
 
-    nix-flatpak.url = "github:gmodena/nix-flatpak";
+    nwg-displays.url = "github:nwg-piotr/nwg-displays/v0.4.3";
 
-    openconnect-sso = {
-      url = "github:ThinkChaos/openconnect-sso/fix/nix-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    zed.url = "github:zed-industries/zed/v1.13.2";
 
-    stackpkgs = {
-      type = "git";
-      url = "https://code.thishorsie.rocks/ryze/stackpkgs";
+    vicinae.url = "github:vicinaehq/vicinae/v0.24.0";
+    vicinae-extensions = {
+      url = "github:vicinaehq/extensions";
+      inputs.vicinae.follows = "vicinae";
     };
 
     zen-browser = {
@@ -67,18 +70,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    arkenfox = {
-      url = "github:dwarfmaster/arkenfox-nixos";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
-    };
-
-    stylix = {
-      url = "github:nix-community/stylix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     dms = {
-      url = "github:AvengeMedia/DankMaterialShell";
+      url = "github:AvengeMedia/DankMaterialShell/v1.5.3";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     dgop = {
@@ -90,144 +83,42 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    noctalia = {
-      url = "github:noctalia-dev/noctalia-shell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    ambxst = {
-      url = "github:Axenide/Ambxst";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    vicinae.url = "github:vicinaehq/vicinae";
-    vicinae-extensions = {
-      url = "github:vicinaehq/extensions";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    awww.url = "git+https://codeberg.org/LGFae/awww";
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
 
-    spicetify-nix = {
-      url = "github:Gerg-L/spicetify-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
+    stackpkgs = {
+      type = "git";
+      url = "https://code.thishorsie.rocks/ryze/stackpkgs";
     };
 
     nixos-hardware.url = "github:nixos/nixos-hardware";
 
-    nixvim.url = "github:runarsf/nixvim";
+    hytale-launcher.url = "github:JPyke3/hytale-launcher-nix";
 
-    melonds = {
-      url = "github:melonDS-emu/melonDS";
+    helium = {
+      url = "github:schembriaiden/helium-browser-nix-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    vault = {
-      url = "git+ssh://git@github.com/Boiing587/vault";
-      flake = false;
-    };
-
-    hytale-launcher.url = "github:JPyke3/hytale-launcher-nix";
   };
 
-  outputs = inputs @ {self, ...}: let
-    treefmtEval = inputs.flake-utils.eachDefaultSystem (
-      pkgs: inputs.treefmtNix.lib.evalModule pkgs ./treefmt.nix
+  outputs = inputs @ {
+    self,
+    import-tree,
+    flake-parts,
+    ...
+  }: let
+    inherit (builtins) elem;
+    inherit (flake-parts.lib) mkFlake;
+  in
+    mkFlake {inherit inputs;} (
+      import-tree.filterNot (
+        x:
+          elem (baseNameOf x) [
+            "flake.nix"
+            "treefmt.nix"
+            "hardware-configuration.nix"
+            "nixpkgs.nix"
+          ]
+      )
+      ./.
     );
-  in rec {
-    lib = import ./lib {
-      inherit inputs;
-      inherit (inputs.self) outputs;
-    };
-
-    nixosConfigurations = {
-      # TODO Should isDesktop be an option to mkHost?
-      # TODO Automatically create <user>@<host> from host.users
-      runix = lib.mkHost {
-        system = "x86_64-linux";
-        # TODO graphical = true;
-        hostname = "runix";
-        users = ["runar"];
-      };
-
-      anuc = lib.mkHost {
-        system = "x86_64-linux";
-        hostname = "anuc";
-        users = ["runar" "blahaj"];
-      };
-
-      rpi = lib.mkHost {
-        system = "aarch64-linux";
-        hostname = "rpi";
-        users = ["runar"];
-      };
-
-      boiler = lib.mkHost {
-        system = "x86_64-linux";
-        hostname = "boiler";
-        users = ["thomas"];
-      };
-
-      toaster = lib.mkHost {
-        system = "x86_64-linux";
-        hostname = "toaster";
-        users = ["thomas"];
-      };
-
-      roomba = lib.mkHost {
-        system = "x86_64-linux";
-        hostname = "roomba";
-        users = ["majus"];
-      };
-    };
-
-    homeConfigurations = {
-      runar = lib.mkUser {username = "runar";};
-
-      "runar@runix" = lib.mkUser {
-        username = "runar";
-        system = "x86_64-linux";
-        hostname = "runix";
-      };
-
-      "runar@anuc" = lib.mkUser {
-        username = "runar";
-        system = "x86-64-linux";
-        hostname = "anuc";
-      };
-
-      "runar@rpi" = lib.mkUser {
-        username = "runar";
-        system = "aarch64-linux";
-        hostname = "rpi";
-      };
-
-      thomas = lib.mkUser {username = "thomas";};
-
-      "thomas@boiler" = lib.mkUser {
-        username = "thomas";
-        system = "x86_64-linux";
-        hostname = "boiler";
-      };
-
-      "thomas@toaster" = lib.mkUser {
-        username = "thomas";
-        system = "x86_64-linux";
-        hostname = "toaster";
-      };
-
-      majus = lib.mkUser {username = "majus";};
-
-      "majus@roomba" = lib.mkUser {
-        username = "majus";
-        system = "x86_64-linux";
-        hostname = "roomba";
-      };
-    };
-
-    formatter = inputs.flake-utils.eachDefaultSystem (
-      pkgs: treefmtEval.${pkgs.stdenv.hostPlatform.system}.config.build.wrapper
-    );
-
-    checks = inputs.flake-utils.eachDefaultSystem (pkgs: {
-      formatting = treefmtEval.${pkgs.stdenv.hostPlatform.system}.config.build.check self;
-    });
-  };
 }

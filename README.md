@@ -1,64 +1,91 @@
 # NixOS Configuration ❄️
 
-## Initial setup
+## Getting Started
 
-1. Install [NixOS](https://nixos.org/download.html) (or Nix)
-    > **NB!** Make sure `$USER`- and `$HOST`name match the configuration.
+> [!NOTE]
+> Before installing, it can be beneficial to add your user to `nix.settings.trusted-users` (e.g., `/etc/nixos/configuration.nix` if you just installed), as the `nh` wrapper sets the options `extra-substituters` and `extra-trusted-public-keys`, which are silently ignored if set by non-trusted users.
+> This can significantly reduce the time needed for building.
 
-1. Put your SSH key with access to the sops-protected vault and authentication access to your GitHub account on your host (`~/.ssh/id_nix`),\
-  and add it to the ssh agent
-    ```bash
-    eval $(ssh-agent)
-    ssh-add ~/.ssh/id_nix
-    ```
+First you will need an SSH key with access to the sops-protected vault and authentication access to your GitHub account.
+Place it in `~/.ssh/id_nix`.
 
-1. Clone this repository (to path matching [`$FLAKE`](./modules/users/development/nix.nix))
-    ```bash
-    git clone git@github.com:runarsf/dotfiles.git ~/.config/nixos
-    cd ~/.config/nixos
-    ```
+```nix
+export NIX_CONFIG="extra-experimental-features = nix-command flakes pipe-operators"
+eval $(ssh-agent); ssh-add ~/.ssh/id_nix
 
-1. Copy `hardware-configuration.nix` to the host configuration
-    ```bash
-    cp /etc/nixos/hardware-configuration.nix ./hosts/${HOST}/hardware-configuration.nix
-    ```
+nix flake update vault
+nix run .#niks -- os boot .#my-hostname
+reboot
 
-1. Build and switch
-    ```bash
-    # NB! If your hostname doesn't match the configured one, temporarily change it in the shell
-    ./packages/niks/niks.sh os switch --ask --hostname ${HOST:?} .
-    ```
+passwd
+```
 
-1. You should now be able to log in with the same username and the password set in the config (`changeme`).\
-  After logging in, make sure to change your password, and check that all the [substituters](./modules/nix/nix.nix) are applied correctly.
-    ```bash
-    passwd
+## Updating the Flake
 
-    nix config show | egrep "^substituters"
-    ```
+The `update` package can be used to update the flake.
+It updates the flake inputs, locks the inputs defined in [`releaseLockedInputs`](./packages/updates/default.nix) to the latest release (including dependants), and updates instances of git fetchers[^fetchers] in the config.
 
+```nix
+nix run .#update
+```
 
-## Useful tools and resources
+To get around GitHub's API rate limiting, set the `GITHUB_TOKEN` environment variable before running the script. This should not be necessary if you're just updating once or twice.
 
-- [NixOS Package Search](https://search.nixos.org/packages)
-- [NixOS Options Search](https://search.nixos.org/options)
-- [Home Manager Option Search](https://home-manager-options.extranix.com/)
-- [Noogle](https://noogle.dev/)
-- [Nix Package Version Search](https://lazamar.co.uk/nix-versions)
-- `sudo nix-store --verify --check-contents --repair`
-- [Stuck because binary cache is down](https://discourse.nixos.org/t/i-seem-to-be-stuck-because-a-binary-cache-is-down/23641/3)\
-    `sudo nixos-rebuild test --flake .# --accept-flake-config --option build-use-substitutes false`
-- Prefetch hash (prepend `sha256:`): `nix-prefetch-url --unpack $url`
-- Jump into the build of a derivation: `nix-shell -E 'with import <nixpkgs> {  }; callPackage ./default.nix {  }'`
-- Test an expression: `nix eval -f test.nix fn`\
-    <kbd>test.nix</kbd>
-    ```
-    { lib ? import <nixpkgs/lib> }:
+The only caveat of this method is that fetchers[^fetchers] cannot be used in `let...in` expressions, as `update-nix-fetchgit`[^update-nix-fetchgit] cannot handle it.
 
-    {
-      fn = builtins.trace "Hello World!" true;
-    }
-    ```
+[^fetchers]: https://ryantm.github.io/nixpkgs/builders/fetchers
 
+[^update-nix-fetchgit]: https://github.com/expipiplus1/update-nix-fetchgit
 
-> Core library functions are shamelessly stolen from [![avatar](https://images.weserv.nl/?url=avatars.githubusercontent.com/u/39416660?v=4&h=20&w=20&fit=cover&mask=circle&maxage=7d) `imatpot/dotfiles`](https://github.com/imatpot/dotfiles)
+### Manually Updating an Input
+
+Some times you might want to manually update and input; in this case, use the unwrapped `update-flake` package.
+This also works on other Nix flakes.
+
+```nix
+# Update Zed to the latest commit
+nix run .#update-flake -- zed
+
+# Update Zed to the latest release
+nix run .#update-flake -- --release zed
+```
+
+## Module/Feature Structure
+
+```nix
+{
+  self,
+  inputs,
+  lib',
+  ...
+}: {
+  flake.nixosModules.myModule = {config, pkgs, lib, ...}: {
+  };
+
+  flake.homeModules.myModule = {config, pkgs, lib, ...}: {
+  };
+
+  perSystem = {
+    pkgs,
+    lib,
+    self',
+    ...
+  }: {
+    # https://birdeehub.github.io/nix-wrapper-modules/md/wrapper-modules.html
+    packages.myPackage = inputs.wrapper-modules.wrappers.myPackage.wrap {
+      inherit pkgs;
+    };
+  };
+}
+```
+
+## nixpkgs Config
+
+Since nixpkgs is instantiated externally in `parts.nix` (via `perSystem`), `nixpkgs.config` cannot be set inside NixOS or Home Manager modules. Instead, place a `nixpkgs.nix` sidecar next to the feature's `default.nix` returning a plain attrset:
+
+```nix
+# features/my-feature/nixpkgs.nix
+{ allowedLicenses = [ ... ]; }
+```
+
+`parts.nix` collects all `nixpkgs.nix` files under `features/` and deep-merges them into the nixpkgs config at instantiation time.
